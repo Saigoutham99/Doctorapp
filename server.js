@@ -19,11 +19,12 @@ app.use(morgan("dev"));
 // Routes
 app.use("/api/v1/user", require("./routes/userRoutes"));
 app.use("/api/v1/admin", require("./routes/adminRoutes"));
+app.use("/api/v1/doctor", require("./routes/doctorRoutes"));
 
 // Server Port
 const PORT = process.env.PORT || 8080;
 
 // Start Server
 app.listen(PORT, "0.0.0.0", () => {
-    console.log(`✅ Server Running on port ${PORT}`.bgCyan.white);
+  console.log(`✅ Server Running on port ${PORT}`.bgCyan.white);
 });

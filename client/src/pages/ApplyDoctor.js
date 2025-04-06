@@ -1,10 +1,11 @@
 import React from 'react';
 import Layout from '../components/Layout';
-import { Col, Form, Input, Row, TimePicker, message } from 'antd';
+import { Col, Form, Input, Row, TimePicker, message, Button } from 'antd';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { showLoading, hideLoading } from '../redux/features/alertSlice';
 import axios from 'axios';
+import moment from 'moment';
 
 const ApplyDoctor = () => {
   const { user } = useSelector((state) => state.user);
@@ -16,9 +17,22 @@ const ApplyDoctor = () => {
   const handleFinish = async (values) => {
     try {
       dispatch(showLoading());
+
+      // Ensure timings are properly formatted as HH:mm
+      const formattedTimings = [
+        values.timings[0] ? values.timings[0].format("HH:mm") : '',
+        values.timings[1] ? values.timings[1].format("HH:mm") : '',
+      ];
+
+      console.log('Formatted Timings:', formattedTimings);  // Log to check the timings before sending
+
       const res = await axios.post(
         '/api/v1/user/apply-doctor',
-        { ...values, userId: user.id },
+        { 
+          ...values, 
+          userId: user.id,
+          timings: formattedTimings,  // Sending formatted timings
+        },
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -28,10 +42,10 @@ const ApplyDoctor = () => {
       dispatch(hideLoading());
 
       if (res.data.success) {
-        message.success(res.data.message || 'Doctor Application Submitted');
+        message.success(res.data.message);
         navigate('/');
       } else {
-        message.error(res.data.message || 'Failed to apply');
+        message.error(res.data.message);
       }
     } catch (error) {
       dispatch(hideLoading());
@@ -91,18 +105,20 @@ const ApplyDoctor = () => {
             </Form.Item>
           </Col>
           <Col xs={24} md={24} lg={8}>
-            <Form.Item label='Fees Per Consultation' name='feesPerCunsaltation' required rules={[{ required: true }]}>
+            <Form.Item label='Fees Per Consultation' name='feesPerConsultation' required rules={[{ required: true }]}>
               <Input type='number' placeholder='Your Fees' />
             </Form.Item>
           </Col>
           <Col xs={24} md={24} lg={8}>
-            <Form.Item label='Timings' name='timing' required rules={[{ required: true }]}>
+            <Form.Item label='Timings' name='timings' required>
               <TimePicker.RangePicker format="HH:mm" />
             </Form.Item>
           </Col>
           <Col xs={24} md={24} lg={8}></Col>
           <Col xs={24} md={24} lg={8}>
-            <button className='btn btn-primary form-btn' type='submit'>Submit</button>
+            <Button type="primary" htmlType="submit" className='form-btn'>
+              Submit
+            </Button>
           </Col>
         </Row>
       </Form>

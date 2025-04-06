@@ -18,8 +18,28 @@ const Layout = ({ children }) => {
     navigate('/login');
   };
 
+
+//*** Doctor menu ***/
+const doctorMenu = [
+  {
+    name: 'Home',
+    path: '/',
+    icon: 'fa-solid fa-house',
+  },
+  {
+    name: 'Appointments',
+    path: '/appointments',
+    icon: 'fa-solid fa-list',
+  },
+  {
+    name: 'Profile',
+    path: `/doctor/profile/${user?._id}`,  
+    icon: 'fa-solid fa-user',
+  },
+];
+
   // Decide menu based on user role (admin or regular user)
-  const SidebarMenu = user && user.isAdmin ? adminMenu : userMenu;
+  const SidebarMenu =  user?.isAdmin ? adminMenu : user?.isDoctor ? doctorMenu : userMenu;
 
   return (
     <div className="main">

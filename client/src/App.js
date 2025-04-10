@@ -13,6 +13,7 @@ import Doctors from './pages/admin/Doctors';
 import Profile from './pages/doctor/Profile';
 import BookingPage from './pages/BookingPage';
 
+
 function App() {
   const { loading } = useSelector(state => state.alerts);
 

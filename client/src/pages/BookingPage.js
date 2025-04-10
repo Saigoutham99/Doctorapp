@@ -2,16 +2,20 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 import Layout from "../components/Layout";
-import { DatePicker, TimePicker } from "antd";
+import { DatePicker, message, TimePicker } from "antd";
 import moment from "moment";
+import { useDispatch, useSelector } from "react-redux";
+import { showLoading, hideLoading } from '../redux/features/alertSlice';
 
 const BookingPage = () => {
+  const { user } = useSelector(state => state.user);
   const params = useParams();
   const [doctors, setDoctor] = useState({});
   const [error, setError] = useState("");
-  const [data,setDate] = useState()
-  const [timings, setTimings] = useState()
-  const [isAvailable, setAvailable] = useState()
+  const [date, setDate] = useState(null);  
+  const [time, setTime] = useState(null); 
+  const [isAvailable, setAvailable] = useState();
+  const dispatch = useDispatch();
 
   // Fetch doctor data based on doctorId
   const getDoctorData = async () => {
@@ -25,11 +29,11 @@ const BookingPage = () => {
 
     try {
       const res = await axios.post(
-        '/api/v1/doctor/getDoctorById', // Correct API route
-        { doctorId: params.doctorId },  // doctorId from URL params
+        '/api/v1/doctor/getDoctorById', 
+        { doctorId: params.doctorId },  
         {
           headers: {
-            Authorization: `Bearer ${token}`,  // Bearer token for authorization
+            Authorization: `Bearer ${token}`,  
           },
         }
       );
@@ -46,6 +50,35 @@ const BookingPage = () => {
     }
   };
 
+  //****** booking func */
+  const handleBooking = async () => {
+    try {
+      dispatch(showLoading());
+      const res = await axios.post('/api/v1/user/book-appointment',
+        {
+          doctorId: params.doctorId,
+          userId: user._id,  // Fixed issue here
+          doctorInfo: doctors,
+          date: date,
+          userInfo: user,
+          time: time,
+        }, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`, 
+          }
+        }
+      );
+      dispatch(hideLoading());
+      if (res.data.success) {
+        message.success(res.data.message);
+      }
+
+    } catch (error) {
+      dispatch(hideLoading());
+      console.log(error); 
+    }
+  };
+
   useEffect(() => {
     getDoctorData();  // Call API on component mount
   }, []);
@@ -56,27 +89,32 @@ const BookingPage = () => {
       <div className="container">
         {doctors && (
           <div>
-          <h4>
-            Dr.{doctors.firstName} {doctors.lastName}
-          </h4>
-          <h4>Fees : {doctors.feesPerConsultation}</h4>
-          <h4>
-          Timings: {doctors.timings && doctors.timings[0]} - {doctors.timings && doctors.timings[1]}
-          </h4>
-          <div className="d-flex flex-column w-50">
-            <DatePicker
-            className="m-2" 
-            format="DD-MM-YYYY"  onChange={(value) => moment(value).format("DD-MM-YYYY")}/>
-            <TimePicker.RangePicker format="HH:mm"  className="m-2"  onChange={(values) => setTimings([
-              moment(values[0]).format("HH:mm"),
-              moment(values[1]).format("HH:mm"),
-            ])}/>
-            <button className="btn btn-primary mt-2">
-              Check Availability
-            </button>
-          </div>
+            <h4>Dr. {doctors.firstName} {doctors.lastName}</h4>
+            <h4>Fees: {doctors.feesPerConsultation}</h4>
+            <h4>Timings: {doctors.timings && doctors.timings[0]} - {doctors.timings && doctors.timings[1]}</h4>
+            <div className="d-flex flex-column w-50">
+              {/* Use 'month' picker for better month/year navigation */}
+              <DatePicker
+                className="m-2" 
+                format="DD-MM-YYYY"
+                picker="date"  // This should allow you to see month and year
+                onChange={(value) => setDate(moment(value).format("DD-MM-YYYY"))} 
+              />
+              <TimePicker 
+                format="HH:mm"  
+                className="m-2"  
+                onChange={(value) => setTime(moment(value).format("HH:mm"))} 
+              />
+              <button className="btn btn-primary mt-2">
+                Check Availability
+              </button>
+              <button className="btn btn-dark mt-2" onClick={handleBooking}>
+                Book Now
+              </button>
+            </div>
           </div>
         )}
+        {error && <p style={{ color: "red" }}>{error}</p>}
       </div>
     </Layout>
   );

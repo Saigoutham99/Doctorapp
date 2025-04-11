@@ -12,6 +12,7 @@ import Users from './pages/admin/Users';
 import Doctors from './pages/admin/Doctors';
 import Profile from './pages/doctor/Profile';
 import BookingPage from './pages/BookingPage';
+import Appointments from './pages/Appointments';
 
 
 function App() {
@@ -21,11 +22,7 @@ function App() {
     <BrowserRouter>
       {loading ? <Spinner /> :
         <Routes>
-          <Route path="/" element={
-            <ProtectedRoute>
-              <HomePage />
-            </ProtectedRoute>
-          } />
+         
           <Route path="/apply-doctor" element={
             <ProtectedRoute>
               <ApplyDoctor />
@@ -65,6 +62,16 @@ function App() {
             <PublicRoute>
               <Register />
             </PublicRoute>
+          } />
+           <Route path="/appointments" element={
+            <ProtectedRoute>
+              <Appointments />
+            </ProtectedRoute>
+          } />
+           <Route path="/" element={
+            <ProtectedRoute>
+              <HomePage />
+            </ProtectedRoute>
           } />
         </Routes>
       }

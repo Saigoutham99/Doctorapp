@@ -14,7 +14,7 @@ const BookingPage = () => {
   const [error, setError] = useState("");
   const [date, setDate] = useState(null);  
   const [time, setTime] = useState(null); 
-  const [isAvailable, setAvailable] = useState();
+  const [isAvailable, setIsAvailable] = useState(false);
   const dispatch = useDispatch();
 
   // Fetch doctor data based on doctorId
@@ -52,17 +52,53 @@ const BookingPage = () => {
 
   //****** booking func */
   const handleBooking = async () => {
+    // Check if date and time are selected
+    if (!date || !time) {
+      return alert("Date & Time are required!");
+    }
+
     try {
+      setIsAvailable(true);
       dispatch(showLoading());
-      const res = await axios.post('/api/v1/user/book-appointment',
+
+      // Request to book appointment
+      const res = await axios.post(
+        '/api/v1/user/book-appointment', 
         {
           doctorId: params.doctorId,
-          userId: user._id,  // Fixed issue here
+          userId: user._id,  
           doctorInfo: doctors,
           date: date,
           userInfo: user,
           time: time,
-        }, {
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`, 
+          }
+        }
+      );
+
+      dispatch(hideLoading());
+      if (res.data.success) {
+        message.success(res.data.message);
+      } else {
+        message.error(res.data.message);
+      }
+    } catch (error) {
+      dispatch(hideLoading());
+      console.log(error); 
+    }
+  };
+
+  // Check appointment availability
+  const handleAvailability = async () => {
+    try {
+      dispatch(showLoading());
+      const res = await axios.post(
+        '/api/v1/user/booking-availability',
+        { doctorId: params.doctorId, date, time },
+        {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`, 
           }
@@ -70,9 +106,11 @@ const BookingPage = () => {
       );
       dispatch(hideLoading());
       if (res.data.success) {
+        setIsAvailable(true);
         message.success(res.data.message);
+      } else {
+        message.error(res.data.message);
       }
-
     } catch (error) {
       dispatch(hideLoading());
       console.log(error); 
@@ -93,19 +131,22 @@ const BookingPage = () => {
             <h4>Fees: {doctors.feesPerConsultation}</h4>
             <h4>Timings: {doctors.timings && doctors.timings[0]} - {doctors.timings && doctors.timings[1]}</h4>
             <div className="d-flex flex-column w-50">
-              {/* Use 'month' picker for better month/year navigation */}
               <DatePicker
                 className="m-2" 
                 format="DD-MM-YYYY"
-                picker="date"  // This should allow you to see month and year
-                onChange={(value) => setDate(moment(value).format("DD-MM-YYYY"))} 
+                picker="date"  // Use picker for month/year navigation
+                onChange={(value) => { 
+                  setDate(moment(value).format("DD-MM-YYYY"))} 
+                }
               />
               <TimePicker 
                 format="HH:mm"  
                 className="m-2"  
-                onChange={(value) => setTime(moment(value).format("HH:mm"))} 
+                onChange={(value) => {
+                  setTime(moment(value).format("HH:mm"))} 
+                }
               />
-              <button className="btn btn-primary mt-2">
+              <button className="btn btn-primary mt-2" onClick={handleAvailability}>
                 Check Availability
               </button>
               <button className="btn btn-dark mt-2" onClick={handleBooking}>
